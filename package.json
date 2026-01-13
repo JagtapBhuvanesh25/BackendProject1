@@ -1,0 +1,28 @@
+{
+  "name": "backendproject1",
+  "version": "1.0.0",
+  "description": "This project is a complex backend project that is built with nodejs, expressjs, mongodb, mongoose, jwt, bcrypt, and many more. We are building a complete video hosting website similar to youtube with all the features like login, signup, upload video, like, dislike, comment, reply, subscribe, unsubscribe, and many more.",
+  "keywords": [
+    "javascript",
+    "backend"
+  ],
+  "homepage": "https://github.com/JagtapBhuvanesh25/BackendProject1#readme",
+  "bugs": {
+    "url": "https://github.com/JagtapBhuvanesh25/BackendProject1/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JagtapBhuvanesh25/BackendProject1.git"
+  },
+  "license": "ISC",
+  "author": "Bhuvanesh Jagtap",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11",
+    "prettier": "^3.7.4"
+  }
+}
