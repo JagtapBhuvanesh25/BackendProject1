@@ -46,9 +46,9 @@ const userSchema = new Schema({
     }
 },{timestamps: true})
 
-userSchema.pre("save", async function (next) {
-    if(this.isModified("password")) this.password = await bcrypt.hash(this.password, 10);
-    return next()
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return
+  this.password = await bcrypt.hash(this.password, 10)
 }) //here must not use arrow funtions as it doesnt have the refernce of current instnace
 
 userSchema.methods.isPasswordCorrect = async function (password) {

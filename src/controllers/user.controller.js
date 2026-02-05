@@ -12,17 +12,19 @@ const registerUser = asyncHandeler( async (req,res) => {
     if([fullname, username, email, password].some((item) => item?.trim() === "")){
         throw new apiError(400, "All Fields Are Required")
     }
-
+    
     // check if exist by unique (here both email,username)
-    const userExist = User.findOne({
+    const userExist = await User.findOne({
         $or: [{username}, {email}]
     })
 
     if(userExist) throw new apiError(409, "User Already Exist")
 
     // cheack for images, required avatar
-    const avatarLocalPath = req.files?.avatar[0]?.path
-    const coverImageLocalPath = req.files?.coverImage[0]?.path
+    let avatarLocalPath
+    let coverImageLocalPath
+    if (req.files && Array.isArray(req.files.avatar) && req.files.avatar.length > 0) avatarLocalPath = req.files.avatar[0].path
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) coverImageLocalPath = req.files.coverImage[0].path
 
     if(!avatarLocalPath) throw new apiError(400, "Avatar Is Required")
     
@@ -30,7 +32,7 @@ const registerUser = asyncHandeler( async (req,res) => {
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
-    if(!avatarURL) throw new apiError(400, "Avatar Is Required")
+    if(!avatar) throw new apiError(400, "Avatar Iss Required")
 
     // create user object - create entry in db
     const user = await User.create({
@@ -44,7 +46,7 @@ const registerUser = asyncHandeler( async (req,res) => {
 
     // remove password and refresh token field
     const userCreated = await User.findById(user._id).select(
-        "-password refreshToken"
+        "-password -refreshToken"
     )
 
     // check user created
