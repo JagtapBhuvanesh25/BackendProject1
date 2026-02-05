@@ -47,7 +47,7 @@ const userSchema = new Schema({
 },{timestamps: true})
 
 userSchema.pre("save", async function (next) {
-    if(isModified("password")) this.password = await bcrypt.hash(this.password, 10);
+    if(this.isModified("password")) this.password = await bcrypt.hash(this.password, 10);
     return next()
 }) //here must not use arrow funtions as it doesnt have the refernce of current instnace
 

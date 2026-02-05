@@ -7,4 +7,4 @@ class apiResponse{
     }
 }
 
-export default apiError
+export default apiResponse
