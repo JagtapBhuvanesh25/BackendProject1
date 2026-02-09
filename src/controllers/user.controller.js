@@ -3,6 +3,7 @@ import apiError from "../utils/apiError.js"
 import apiResponse from "../utils/apiResponse.js"
 import asyncHandeler from "../utils/asyncHandler.js"
 import uploadOnCloudinary from "../utils/cloudinary.js"
+import jwt from "jsonwebtoken"
 
 const options = {
     httpOnly: true,
@@ -126,7 +127,7 @@ const loginUser = asyncHandeler(async (req,res) =>{
 })
 
 const logoutUser = asyncHandeler(async (req,res) => {
-    User.findByIdAndUpdate(
+    await User.findByIdAndUpdate(
         req.user._id,
         {
             $set: {
@@ -141,10 +142,66 @@ const logoutUser = asyncHandeler(async (req,res) => {
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
+    .json(
+        new apiResponse(
+            200,
+            {},
+            "USer Logged Out"
+        )
+    )
 })
+
+const refreshAccessToken = asyncHandeler(async (req, res) => {
+  try {
+    const incomingRefreshToken =
+      req.cookies?.refreshToken || req.body?.refreshToken
+
+    if (!incomingRefreshToken) {
+      throw new apiError(401, "Unauthorized request")
+    }
+
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET // ✅ correct secret
+    )
+
+    const user = await User.findById(decodedToken._id)
+    if (!user) {
+      throw new apiError(401, "Invalid refresh token")
+    }
+
+    if (incomingRefreshToken !== user.refreshToken) {
+      throw new apiError(401, "Refresh token expired")
+    }
+
+    const {
+      accessToken,
+      refreshToken: newRefreshToken
+    } = await generateAccessAndRefreshTokens(user._id)
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(
+        new apiResponse(
+          200,
+          { accessToken, refreshToken: newRefreshToken },
+          "Access token refreshed"
+        )
+      )
+  } catch (error) {
+    throw new apiError(
+      401,
+      error?.message || "Invalid refresh token"
+    )
+  }
+})
+
 
 export {
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    refreshAccessToken,
 }
