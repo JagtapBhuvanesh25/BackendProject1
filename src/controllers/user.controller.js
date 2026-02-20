@@ -1,3 +1,4 @@
+import { subscription } from "../models/subscription.model.js"
 import { User } from "../models/user.model.js"
 import apiError from "../utils/apiError.js"
 import apiResponse from "../utils/apiResponse.js"
@@ -340,6 +341,76 @@ const updateUserCoverImage = asyncHandeler(async(req, res) => {
     }
 })
 
+const getUserChannelProfile = asyncHandeler( async(req,res) => {
+    const { username } = req.params
+    if(!username?.trim()) throw new apiError(400, "Username Missing")
+
+    const channel = await User.aggregate([
+        {
+            $match: {
+                username: username.toLowerCase()
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers"
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "channelsSubscribedTo"
+            }
+        },
+        {
+            $addFields: {
+                subscribersCount: {
+                    $size: "$subscribers"
+                },
+                channelsSubscribedToCount: {
+                    $size: "$channelsSubscribedTo"
+                },
+                isSubscribed: {
+                    $cond: {
+                        if: {
+                            $in: [req.user?._id, "$subscribers.subscriber"]
+                        },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                username: 1,
+                fullname: 1,
+                email: 1,
+                isSubscribed: 1,
+                subscribersCount: 1,
+                channelsSubscribedToCount: 1,
+                avatar: 1,
+                coverImage: 1,
+            }
+        }
+    ])
+    if(!channel?.length) throw apiError(404, "Channel Does Not Exist")
+    return res
+        .status(200)
+        .json(
+            new apiResponse(
+                200,
+                channel[0],
+                "User Channel Fetched Successfully"
+            )
+        )
+})
+
 export {
     registerUser,
     loginUser,
@@ -349,5 +420,6 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getUserChannelProfile,
 }
